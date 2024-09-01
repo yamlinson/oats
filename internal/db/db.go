@@ -236,6 +236,26 @@ func GetItem(list string, random bool, last bool) (*Item, error) {
 	return nil, errors.New("bad options")
 }
 
+// RemoveItem removes an item from the database
+func RemoveItem(name string, list string) error {
+	db, err := openDB()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	setUpDB(db)
+	_, err = db.Exec(`
+            DELETE FROM items
+            WHERE name = ?
+            AND list = ?
+        `,
+		name, list)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func openDB() (*sql.DB, error) {
 	dbPath := data.DataDir + "oats.db"
 	db, err := sql.Open("sqlite3", dbPath)
