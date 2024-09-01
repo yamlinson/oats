@@ -33,6 +33,4 @@ var (
 
 func init() {
 	rootCmd.AddCommand(addCmd)
-
-	addCmd.Flags().BoolVarP(&create, "create", "c", false, "create list if it does not exist")
 }
