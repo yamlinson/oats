@@ -4,6 +4,7 @@ package db
 import (
 	"database/sql"
 	"errors"
+	"math/rand"
 	"time"
 
 	"github.com/yamlinson/oats/internal/data"
@@ -214,7 +215,23 @@ func GetItem(list string, random bool, last bool) (*Item, error) {
 		return item, nil
 	}
 	// Get random from specified list
+	if len(list) > 0 && random {
+		items, err := GetAllItemsByList(list)
+		if err != nil {
+			return nil, err
+		}
+		item = &(*items)[rand.Intn(len(*items))]
+		return item, nil
+	}
 	// Get random from any list
+	if len(list) == 0 && random {
+		items, err := GetAllItems()
+		if err != nil {
+			return nil, err
+		}
+		item = &(*items)[rand.Intn(len(*items))]
+		return item, nil
+	}
 	// Fail out chaotically
 	return nil, errors.New("bad options")
 }

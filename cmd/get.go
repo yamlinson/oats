@@ -86,10 +86,18 @@ var (
 				fmt.Printf("%s: %s\n", item.List, item.Name)
 			}
 			if random {
-				fmt.Println("Return random")
+				item, err := db.GetItem(args[0], true, false)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("%s: %s\n", item.List, item.Name)
 			}
 			if randomAll {
-				fmt.Println("Random any")
+				item, err := db.GetItem("", true, false)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("%s: %s\n", item.List, item.Name)
 			}
 		},
 	}
