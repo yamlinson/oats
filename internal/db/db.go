@@ -249,9 +249,10 @@ func setUpDB(db *sql.DB) error {
 	_, err := db.Exec(`
         CREATE TABLE IF NOT EXISTS items (
             id INTEGER NOT NULL PRIMARY KEY,
-            name TEXT UNIQUE,
+            name TEXT,
             list TEXT,
-            created TEXT
+            created TEXT,
+            UNIQUE(name, list)
         );
     `)
 	if err != nil {
