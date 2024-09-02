@@ -33,22 +33,28 @@ Run without a flag, `oats get "list name"` will return the oldest item in a list
 Flags:
 
 - -A, --all
-  Get all items from all lists.
+
+Get all items from all lists.
 
 - -a, --all-in-list
-  Get all items from a given list, or the names of all lists if no list is supplied.
+
+Get all items from a given list, or the names of all lists if no list is supplied.
 
 - -R, --any-random
-  Get a random item from any list.
+
+Get a random item from any list.
 
 - -c, --current
-  Get the most recently returned item.
+
+Get the most recently returned item.
 
 - -l, --last
-  Get the most recently created item in a list instead of the oldest.
+
+Get the most recently created item in a list instead of the oldest.
 
 - -r, --random
-  Get a random item from the specified list.
+
+Get a random item from the specified list.
 
 ### `oats rm ["list name"] ["item name"] [flags]`
 
@@ -57,4 +63,5 @@ Run without a flag, `oats rm "list name" "item name"` removes the given item fro
 Flags:
 
 - -c, --current
-  Remove the most recently returned item.
+
+Remove the most recently returned item.
