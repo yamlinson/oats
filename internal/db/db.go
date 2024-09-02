@@ -3,7 +3,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"math/rand"
 	"time"
 
@@ -180,12 +179,12 @@ func GetItem(list string, random bool, last bool) (*Item, error) {
 		if err != nil {
 			return nil, err
 		}
+		rows.Close()
 		item = &Item{
 			Name:    name,
 			List:    list,
 			Created: created,
 		}
-		return item, nil
 	}
 	// Get last from list
 	if len(list) > 0 && !random && last {
@@ -207,12 +206,12 @@ func GetItem(list string, random bool, last bool) (*Item, error) {
 		if err := rows.Scan(&name, &list, &createdString); err != nil {
 			return nil, err
 		}
+		rows.Close()
 		item = &Item{
 			Name:    name,
 			List:    list,
 			Created: created,
 		}
-		return item, nil
 	}
 	// Get random from specified list
 	if len(list) > 0 && random {
@@ -221,7 +220,6 @@ func GetItem(list string, random bool, last bool) (*Item, error) {
 			return nil, err
 		}
 		item = &(*items)[rand.Intn(len(*items))]
-		return item, nil
 	}
 	// Get random from any list
 	if len(list) == 0 && random {
@@ -230,10 +228,50 @@ func GetItem(list string, random bool, last bool) (*Item, error) {
 			return nil, err
 		}
 		item = &(*items)[rand.Intn(len(*items))]
-		return item, nil
 	}
-	// Fail out chaotically
-	return nil, errors.New("bad options")
+	// Set current and return
+	err = setCurrent(db, *item)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+// GetCurrent returns the most recently returned item
+func GetCurrent() (*Item, error) {
+	db, err := openDB()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	setUpDB(db)
+	var item *Item
+	rows, err := db.Query(`
+            SELECT name, list, created FROM items
+            WHERE current = 1
+        `)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	_ = rows.Next()
+	var name string
+	var list string
+	var createdString string
+	var created time.Time
+	if err := rows.Scan(&name, &list, &createdString); err != nil {
+		return nil, err
+	}
+	created, err = time.Parse(time.UnixDate, createdString)
+	if err != nil {
+		return nil, err
+	}
+	item = &Item{
+		Name:    name,
+		List:    list,
+		Created: created,
+	}
+	return item, nil
 }
 
 // RemoveItem removes an item from the database
@@ -265,12 +303,35 @@ func openDB() (*sql.DB, error) {
 	return db, nil
 }
 
+func setCurrent(db *sql.DB, item Item) error {
+	_, err := db.Exec(`
+            UPDATE items
+            SET current = 0
+            WHERE current = 1
+        `)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`
+            UPDATE items
+            SET current = 1
+            WHERE name = ?
+            AND list = ?
+        `,
+		item.Name, item.List)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func setUpDB(db *sql.DB) error {
 	_, err := db.Exec(`
         CREATE TABLE IF NOT EXISTS items (
             id INTEGER NOT NULL PRIMARY KEY,
             name TEXT,
             list TEXT,
+            current INTEGER DEFAULT 0,
             created TEXT,
             UNIQUE(name, list)
         );

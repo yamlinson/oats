@@ -3,24 +3,26 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/yamlinson/oats/internal/db"
 )
 
 var (
-	all       bool
-	allInList bool
-	last      bool
-	first     bool
-	random    bool
-	randomAll bool
+	all        bool
+	allInList  bool
+	last       bool
+	first      bool
+	random     bool
+	randomAll  bool
+	getCurrent bool
 	// getCmd represents the get command
 	getCmd = &cobra.Command{
 		Use:   "get",
 		Short: "Get lists and their items",
 		Args: func(cmd *cobra.Command, args []string) error {
-			first = !all && !allInList && !last && !random && !randomAll
+			first = !all && !allInList && !last && !random && !randomAll && !getCurrent
 			if allInList {
 				if err := cobra.MaximumNArgs(1)(cmd, args); err != nil {
 					return err
@@ -31,7 +33,7 @@ var (
 					return err
 				}
 			}
-			if all || randomAll {
+			if all || randomAll || getCurrent {
 				if err := cobra.ExactArgs(0)(cmd, args); err != nil {
 					return err
 				}
@@ -39,7 +41,7 @@ var (
 			return nil
 		},
 		Run: func(_ *cobra.Command, args []string) {
-			first = !all && !allInList && !last && !random && !randomAll
+			first = !all && !allInList && !last && !random && !randomAll && !getCurrent
 			if all {
 				items, err := db.GetAllItems()
 				if err != nil {
@@ -99,6 +101,14 @@ var (
 				}
 				fmt.Printf("%s: %s\n", item.List, item.Name)
 			}
+			if getCurrent {
+				item, err := db.GetCurrent()
+				if err != nil {
+					fmt.Println("Could not get current item. Make sure one is set by getting any item with `oats get`")
+					log.Fatal(err)
+				}
+				fmt.Printf("%s: %s\n", item.List, item.Name)
+			}
 		},
 	}
 )
@@ -111,5 +121,6 @@ func init() {
 	getCmd.Flags().BoolVarP(&last, "last", "l", false, "get the most recently created item instead of the oldest")
 	getCmd.Flags().BoolVarP(&random, "random", "r", false, "get a random item from the specified list")
 	getCmd.Flags().BoolVarP(&randomAll, "any-random", "R", false, "get a random item from any list")
-	getCmd.MarkFlagsMutuallyExclusive("all", "all-in-list", "last", "random", "any-random")
+	getCmd.Flags().BoolVarP(&getCurrent, "current", "c", false, "gets the last returned item")
+	getCmd.MarkFlagsMutuallyExclusive("all", "all-in-list", "last", "random", "any-random", "current")
 }
